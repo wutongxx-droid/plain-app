@@ -4,7 +4,6 @@ import com.ismartcoding.lib.helpers.CoroutinesHelper.coIO
 import com.ismartcoding.lib.helpers.JsonHelper
 import com.ismartcoding.lib.logcat.LogCat
 import com.ismartcoding.plain.enums.ScreenMirrorMode
-import com.ismartcoding.plain.preferences.StunServersPreference
 import com.ismartcoding.plain.web.websocket.WebRtcSignalingMessage
 import com.ismartcoding.plain.web.websocket.WebSocketHelper
 import org.webrtc.AudioTrack
@@ -21,15 +20,14 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Default STUN servers (accessible in China)
- * These are used when user hasn't configured custom servers
  */
-val DEFAULT_STUN_SERVERS = listOf(
-    "stun:stun.l.google.com:19302",
-    "stun:stun1.l.google.com:19302",
-    "stun:stun2.l.google.com:19302",
-    "stun:stun3.l.google.com:19302",
-    "stun:stun4.l.google.com:19302",
-    "stun:global.stun.twilio.com:3478",
+private val DEFAULT_STUN_SERVERS = listOf(
+    IceServer.builder("stun:stun.l.google.com:19302").createIceServer(),
+    IceServer.builder("stun:stun1.l.google.com:19302").createIceServer(),
+    IceServer.builder("stun:stun2.l.google.com:19302").createIceServer(),
+    IceServer.builder("stun:stun3.l.google.com:19302").createIceServer(),
+    IceServer.builder("stun:stun4.l.google.com:19302").createIceServer(),
+    IceServer.builder("stun:global.stun.twilio.com:3478").createIceServer(),
 )
 
 /**
@@ -38,38 +36,25 @@ val DEFAULT_STUN_SERVERS = listOf(
  */
 fun parseIceServers(stunServersStr: String): List<IceServer> {
     if (stunServersStr.isBlank()) {
-        return emptyList()
+        return DEFAULT_STUN_SERVERS
     }
     return try {
         stunServersStr.split(",").mapNotNull { serverStr ->
             val trimmed = serverStr.trim()
             if (trimmed.isEmpty()) return@mapNotNull null
-            
-            // Check if it's a TURN server with credentials (format: turn:host:port username credential)
-            val parts = trimmed.split(" ")
-            when {
-                parts[0].startsWith("turn://") || parts[0].startsWith("turns://") -> {
-                    if (parts.size >= 3) {
-                        IceServer.builder(parts[0])
-                            .setUsername(parts[1])
-                            .setPassword(parts[2])
-                            .createIceServer()
-                    } else {
-                        null
-                    }
-                }
-                trimmed.startsWith("stun:") || trimmed.startsWith("turn:") -> {
-                    IceServer.builder(trimmed).createIceServer()
-                }
-                else -> {
-                    // Assume it's a STUN server without prefix
+            try {
+                IceServer.builder(trimmed).createIceServer()
+            } catch (e: Exception) {
+                // Try without prefix
+                try {
                     IceServer.builder("stun:$trimmed").createIceServer()
+                } catch (e2: Exception) {
+                    null
                 }
             }
-        }
+        }.ifEmpty { DEFAULT_STUN_SERVERS }
     } catch (e: Exception) {
-        LogCat.e("webrtc: failed to parse ICE servers: ${e.message}")
-        emptyList()
+        DEFAULT_STUN_SERVERS
     }
 }
 
@@ -96,7 +81,6 @@ class WebRtcPeerSession(
     fun createPeerConnectionAndOffer() {
         releasePeerConnection()
         val iceServers = parseIceServers(getStunServers())
-        LogCat.d("webrtc: [$clientId] using ICE servers: $iceServers")
         val rtcConfig = PeerConnection.RTCConfiguration(iceServers).apply {
             sdpSemantics = PeerConnection.SdpSemantics.UNIFIED_PLAN
             tcpCandidatePolicy = PeerConnection.TcpCandidatePolicy.ENABLED
