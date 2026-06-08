@@ -8,7 +8,6 @@ import com.ismartcoding.plain.web.websocket.WebRtcSignalingMessage
 import com.ismartcoding.plain.web.websocket.WebSocketHelper
 import org.webrtc.AudioTrack
 import org.webrtc.IceCandidate
-import org.webrtc.IceServer
 import org.webrtc.MediaConstraints
 import org.webrtc.PeerConnection
 import org.webrtc.PeerConnectionFactory
@@ -39,20 +38,7 @@ class WebRtcPeerSession(
 
     fun createPeerConnectionAndOffer() {
         releasePeerConnection()
-        // STUN/TURN servers for NAT traversal
-        // Using Google's public STUN servers - works for most NAT environments
-        // For Docker/isolated networks, add your own TURN server here
-        val iceServers = listOf(
-            IceServer.builder("stun:stun.l.google.com:19302").createIceServer(),
-            IceServer.builder("stun:stun1.l.google.com:19302").createIceServer(),
-            IceServer.builder("stun:stun2.l.google.com:19302").createIceServer(),
-            // Add your TURN server here for better NAT/Docker support:
-            // IceServer.builder("turn:your-turn-server.com:3478")
-            //     .setUsername("user")
-            //     .setPassword("password")
-            //     .createIceServer(),
-        )
-        val rtcConfig = PeerConnection.RTCConfiguration(iceServers).apply {
+        val rtcConfig = PeerConnection.RTCConfiguration(emptyList()).apply {
             sdpSemantics = PeerConnection.SdpSemantics.UNIFIED_PLAN
             tcpCandidatePolicy = PeerConnection.TcpCandidatePolicy.ENABLED
         }

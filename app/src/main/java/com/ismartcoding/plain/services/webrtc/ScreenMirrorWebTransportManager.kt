@@ -10,6 +10,7 @@ import android.media.projection.MediaProjection
 import android.view.Surface
 import com.ismartcoding.lib.logcat.LogCat
 import com.ismartcoding.plain.data.DScreenMirrorQuality
+import com.ismartcoding.plain.web.websocket.WebRtcSignalingMessage
 import com.ismartcoding.plain.web.websocket.WebSocketHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -17,6 +18,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.nio.ByteBuffer
 import java.util.concurrent.atomic.AtomicBoolean
+import android.util.Base64
 
 /**
  * Manages screen mirroring via WebTransport (QUIC/HTTP3).
@@ -148,6 +150,13 @@ class ScreenMirrorWebTransportManager(
     }
 
     /**
+     * Handle orientation change.
+     */
+    fun onOrientationChanged() {
+        resizeEncoder()
+    }
+
+    /**
      * Remove a client session.
      */
     fun removeClient(clientId: String) {
@@ -201,8 +210,11 @@ class ScreenMirrorWebTransportManager(
                         outputBufferIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
                             val newFormat = mediaCodec?.outputFormat
                             LogCat.d("webtransport: format changed to $newFormat")
-                            // Send format info to clients
-                            broadcastToClients(newFormat?.toByteArray() ?: byteArrayOf())
+                            // Send format info to clients (as simple string)
+                            val formatInfo = newFormat?.let { f ->
+                                "WIDTH=${f.getInteger(MediaFormat.KEY_WIDTH)},HEIGHT=${f.getInteger(MediaFormat.KEY_HEIGHT)},MIME=${f.getString(MediaFormat.KEY_MIME)}"
+                            } ?: "{}"
+                            broadcastToClients(formatInfo.toByteArray(Charsets.UTF_8))
                         }
                         outputBufferIndex >= 0 -> {
                             val outputBuffer = mediaCodec?.getOutputBuffer(outputBufferIndex)
@@ -241,10 +253,10 @@ class ScreenMirrorWebTransportManager(
     private fun sendToClient(clientId: String, data: ByteArray) {
         coroutineScope.launch {
             try {
-                // Use WebSocket to send video data
-                // Note: This is a simplified implementation
-                // In production, you would use WebTransport directly
-                WebSocketHelper.sendSignalingToClientAsync(clientId, data.toString())
+                // Use WebSocket to send video data (as Base64 for simplicity)
+                // Note: This is a simplified implementation - real WebTransport would be more efficient
+                val encoded = Base64.encodeToString(data, Base64.NO_WRAP)
+                WebSocketHelper.sendSignalingToClientAsync(clientId, encoded)
             } catch (e: Exception) {
                 LogCat.e("webtransport: failed to send to $clientId: ${e.message}")
             }
