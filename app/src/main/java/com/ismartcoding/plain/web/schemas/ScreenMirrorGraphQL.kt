@@ -8,6 +8,7 @@ import com.ismartcoding.plain.MainApp
 import com.ismartcoding.plain.data.DScreenMirrorQuality
 import com.ismartcoding.plain.data.ScreenMirrorControlInput
 import com.ismartcoding.plain.enums.ScreenMirrorMode
+import com.ismartcoding.plain.enums.ScreenMirrorTransport
 import com.ismartcoding.plain.events.HRequestScreenMirrorAudioEvent
 import com.ismartcoding.plain.events.HStartScreenMirrorEvent
 import com.ismartcoding.plain.features.Permission
@@ -60,13 +61,20 @@ fun SchemaBuilder.addScreenMirrorSchema() {
         }
     }
     mutation("updateScreenMirrorQuality") {
-        resolver { mode: ScreenMirrorMode ->
+        resolver { mode: ScreenMirrorMode, transport: ScreenMirrorTransport? ->
+            // Get current quality data to preserve transport if not specified
+            val currentQuality = ScreenMirrorQualityPreference.getValueAsync()
             val resolution = when (mode) {
                 ScreenMirrorMode.AUTO -> 1080
                 ScreenMirrorMode.HD -> 1080
                 ScreenMirrorMode.SMOOTH -> 720
             }
-            val qualityData = DScreenMirrorQuality(mode, resolution)
+            val selectedTransport = transport ?: currentQuality.transport
+            val qualityData = DScreenMirrorQuality(
+                mode = mode,
+                transport = selectedTransport,
+                resolution = resolution
+            )
             ScreenMirrorQualityPreference.putAsync(qualityData)
             ScreenMirrorService.qualityData = qualityData
             ScreenMirrorService.instance?.onQualityChanged()

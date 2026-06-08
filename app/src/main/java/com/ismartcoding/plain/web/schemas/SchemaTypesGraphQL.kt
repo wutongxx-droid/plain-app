@@ -7,6 +7,7 @@ import com.ismartcoding.plain.enums.DeviceType
 import com.ismartcoding.plain.enums.MediaPlayMode
 import com.ismartcoding.plain.enums.ScreenMirrorControlAction
 import com.ismartcoding.plain.enums.ScreenMirrorMode
+import com.ismartcoding.plain.enums.ScreenMirrorTransport
 import com.ismartcoding.plain.features.Permission
 import com.ismartcoding.plain.features.file.FileSortBy
 import com.ismartcoding.plain.ui.page.pomodoro.PomodoroState
@@ -25,6 +26,7 @@ fun SchemaBuilder.addSchemaTypes() {
     enum<FileSortBy>()
     enum<PomodoroState>()
     enum<ScreenMirrorMode>()
+    enum<ScreenMirrorTransport>()
     enum<ScreenMirrorControlAction>()
     enum<DevicePlatform>()
     enum<BatteryHealth>()

@@ -16,11 +16,13 @@ import com.ismartcoding.lib.extensions.parcelable
 import com.ismartcoding.lib.logcat.LogCat
 import com.ismartcoding.plain.Constants
 import com.ismartcoding.plain.data.DScreenMirrorQuality
+import com.ismartcoding.plain.enums.ScreenMirrorTransport
 import com.ismartcoding.plain.events.EventType
 import com.ismartcoding.plain.events.WebSocketEvent
 import com.ismartcoding.plain.helpers.NotificationHelper
 import com.ismartcoding.plain.mediaProjectionManager
 import com.ismartcoding.plain.services.webrtc.ScreenMirrorWebRtcManager
+import com.ismartcoding.plain.services.webrtc.ScreenMirrorWebTransportManager
 import com.ismartcoding.plain.web.websocket.WebRtcSignalingMessage
 
 class ScreenMirrorService : LifecycleService() {
@@ -29,7 +31,10 @@ class ScreenMirrorService : LifecycleService() {
     private var isPortrait = true
     private var notificationId: Int = 0
 
+    // WebRTC manager (default)
     private lateinit var webRtcManager: ScreenMirrorWebRtcManager
+    // WebTransport manager (low latency option)
+    private lateinit var webTransportManager: ScreenMirrorWebTransportManager
 
     @Volatile
     private var running = false
@@ -43,6 +48,11 @@ class ScreenMirrorService : LifecycleService() {
             getQuality = { qualityData },
             getIsPortrait = { isPortrait },
         )
+        webTransportManager = ScreenMirrorWebTransportManager(
+            context = this,
+            getQuality = { qualityData },
+            getIsPortrait = { isPortrait },
+        )
         NotificationHelper.ensureDefaultChannel()
         isPortrait = isPortrait()
         orientationEventListener =
@@ -52,7 +62,12 @@ class ScreenMirrorService : LifecycleService() {
                     if (isPortrait != newIsPortrait) {
                         isPortrait = newIsPortrait
                         PlainAccessibilityService.invalidateScreenSizeCache()
-                        webRtcManager.onOrientationChanged()
+                        // Notify active manager
+                        if (qualityData.transport == ScreenMirrorTransport.WEBTRANSPORT) {
+                            webTransportManager.onOrientationChanged()
+                        } else {
+                            webRtcManager.onOrientationChanged()
+                        }
                     }
                 }
             }
@@ -120,7 +135,15 @@ class ScreenMirrorService : LifecycleService() {
         orientationEventListener?.enable()
         running = true
 
-        val captureStarted = webRtcManager.initCapture(mMediaProjection)
+        // Initialize capture based on transport mode
+        val captureStarted = if (qualityData.transport == ScreenMirrorTransport.WEBTRANSPORT) {
+            LogCat.d("screen mirror: using WebTransport transport")
+            webTransportManager.initCapture(mMediaProjection)
+        } else {
+            LogCat.d("screen mirror: using WebRTC transport")
+            webRtcManager.initCapture(mMediaProjection)
+        }
+
         if (!captureStarted) {
             LogCat.e("screen mirror: initCapture failed (VirtualDisplay could not be created), stopping service")
             stop()
@@ -139,7 +162,12 @@ class ScreenMirrorService : LifecycleService() {
     override fun onDestroy() {
         super.onDestroy()
         running = false
-        webRtcManager.releaseAll()
+        // Release both managers
+        if (qualityData.transport == ScreenMirrorTransport.WEBTRANSPORT) {
+            webTransportManager.releaseAll()
+        } else {
+            webRtcManager.releaseAll()
+        }
         orientationEventListener?.disable()
         instance = null
     }
@@ -147,11 +175,21 @@ class ScreenMirrorService : LifecycleService() {
     fun isRunning(): Boolean = running
 
     fun handleWebRtcSignaling(clientId: String, message: WebRtcSignalingMessage) {
-        webRtcManager.handleSignaling(clientId, message)
+        // Route to appropriate manager based on transport mode
+        if (qualityData.transport == ScreenMirrorTransport.WEBTRANSPORT) {
+            webTransportManager.handleSignaling(clientId, message)
+        } else {
+            webRtcManager.handleSignaling(clientId, message)
+        }
     }
 
     fun onQualityChanged() {
-        webRtcManager.onQualityChanged()
+        // Notify active manager
+        if (qualityData.transport == ScreenMirrorTransport.WEBTRANSPORT) {
+            webTransportManager.onQualityChanged()
+        } else {
+            webRtcManager.onQualityChanged()
+        }
     }
 
     fun stop() {
