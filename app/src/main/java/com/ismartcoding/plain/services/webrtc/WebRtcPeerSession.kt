@@ -19,46 +19,6 @@ import org.webrtc.VideoTrack
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * Default STUN servers (accessible in China)
- */
-private val DEFAULT_STUN_SERVERS = listOf(
-    IceServer.builder("stun:stun.l.google.com:19302").createIceServer(),
-    IceServer.builder("stun:stun1.l.google.com:19302").createIceServer(),
-    IceServer.builder("stun:stun2.l.google.com:19302").createIceServer(),
-    IceServer.builder("stun:stun3.l.google.com:19302").createIceServer(),
-    IceServer.builder("stun:stun4.l.google.com:19302").createIceServer(),
-    IceServer.builder("stun:global.stun.twilio.com:3478").createIceServer(),
-)
-
-/**
- * Parse STUN servers from string (comma separated)
- * Format: stun:host:port, turn:host:port username credential
- */
-fun parseIceServers(stunServersStr: String): List<IceServer> {
-    if (stunServersStr.isBlank()) {
-        return DEFAULT_STUN_SERVERS
-    }
-    return try {
-        stunServersStr.split(",").mapNotNull { serverStr ->
-            val trimmed = serverStr.trim()
-            if (trimmed.isEmpty()) return@mapNotNull null
-            try {
-                IceServer.builder(trimmed).createIceServer()
-            } catch (e: Exception) {
-                // Try without prefix
-                try {
-                    IceServer.builder("stun:$trimmed").createIceServer()
-                } catch (e2: Exception) {
-                    null
-                }
-            }
-        }.ifEmpty { DEFAULT_STUN_SERVERS }
-    } catch (e: Exception) {
-        DEFAULT_STUN_SERVERS
-    }
-}
-
-/**
  * Manages a single WebRTC peer connection for one client.
  * TCP candidates are enabled for automatic UDP→TCP fallback.
  */
@@ -77,6 +37,42 @@ class WebRtcPeerSession(
     private var videoSender: RtpSender? = null
     private val remoteDescriptionSet = AtomicBoolean(false)
     private val pendingIceCandidates = mutableListOf<IceCandidate>()
+
+    /**
+     * Default STUN servers (accessible in China)
+     */
+    private val DEFAULT_STUN_SERVERS = listOf(
+        IceServer.builder("stun:stun.l.google.com:19302").createIceServer(),
+        IceServer.builder("stun:stun1.l.google.com:19302").createIceServer(),
+        IceServer.builder("stun:stun2.l.google.com:19302").createIceServer(),
+        IceServer.builder("stun:stun3.l.google.com:19302").createIceServer(),
+        IceServer.builder("stun:stun4.l.google.com:19302").createIceServer(),
+        IceServer.builder("stun:global.stun.twilio.com:3478").createIceServer(),
+    )
+
+    /**
+     * Parse STUN servers from string (comma separated)
+     */
+    private fun parseIceServers(stunServersStr: String): List<IceServer> {
+        if (stunServersStr.isBlank()) return DEFAULT_STUN_SERVERS
+        return try {
+            stunServersStr.split(",").mapNotNull { serverStr ->
+                val trimmed = serverStr.trim()
+                if (trimmed.isEmpty()) return@mapNotNull null
+                try {
+                    IceServer.builder(trimmed).createIceServer()
+                } catch (e: Exception) {
+                    try {
+                        IceServer.builder("stun:$trimmed").createIceServer()
+                    } catch (e2: Exception) {
+                        null
+                    }
+                }
+            }.ifEmpty { DEFAULT_STUN_SERVERS }
+        } catch (e: Exception) {
+            DEFAULT_STUN_SERVERS
+        }
+    }
 
     fun createPeerConnectionAndOffer() {
         releasePeerConnection()
