@@ -20,6 +20,19 @@ import org.webrtc.VideoTrack
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
+ * Default STUN servers (accessible in China)
+ * These are used when user hasn't configured custom servers
+ */
+val DEFAULT_STUN_SERVERS = listOf(
+    "stun:stun.l.google.com:19302",
+    "stun:stun1.l.google.com:19302",
+    "stun:stun2.l.google.com:19302",
+    "stun:stun3.l.google.com:19302",
+    "stun:stun4.l.google.com:19302",
+    "stun:global.stun.twilio.com:3478",
+)
+
+/**
  * Parse STUN servers from string (comma separated)
  * Format: stun:host:port, turn:host:port username credential
  */
