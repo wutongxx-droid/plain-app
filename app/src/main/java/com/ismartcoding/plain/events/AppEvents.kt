@@ -87,6 +87,13 @@ class LoadingDialogEvent(
     val message: String = ""
 ) : ChannelEvent()
 
+class InputDialogEvent(
+    val title: String,
+    val initialValue: String = "",
+    val description: String = "",
+    val onResult: (String) -> Unit,
+) : ChannelEvent()
+
 class WindowFocusChangedEvent(val hasFocus: Boolean) : ChannelEvent()
 
 class DeleteChatItemViewEvent(val id: String) : ChannelEvent()

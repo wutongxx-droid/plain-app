@@ -12,6 +12,7 @@ import com.ismartcoding.plain.events.HRequestScreenMirrorAudioEvent
 import com.ismartcoding.plain.events.HStartScreenMirrorEvent
 import com.ismartcoding.plain.features.Permission
 import com.ismartcoding.plain.preferences.ScreenMirrorQualityPreference
+import com.ismartcoding.plain.preferences.StunServersPreference
 import com.ismartcoding.plain.services.PlainAccessibilityService
 import com.ismartcoding.plain.services.ScreenMirrorService
 import com.ismartcoding.plain.web.models.toModel
@@ -33,6 +34,11 @@ fun SchemaBuilder.addScreenMirrorSchema() {
     query("screenMirrorQuality") {
         resolver { ->
             ScreenMirrorQualityPreference.getValueAsync().toModel()
+        }
+    }
+    query("stunServers") {
+        resolver { ->
+            StunServersPreference.getAsync()
         }
     }
     mutation("startScreenMirror") {
@@ -70,6 +76,13 @@ fun SchemaBuilder.addScreenMirrorSchema() {
             ScreenMirrorQualityPreference.putAsync(qualityData)
             ScreenMirrorService.qualityData = qualityData
             ScreenMirrorService.instance?.onQualityChanged()
+            true
+        }
+    }
+    mutation("updateStunServers") {
+        resolver { servers: String ->
+            StunServersPreference.putAsync(servers)
+            ScreenMirrorService.stunServersData = servers
             true
         }
     }

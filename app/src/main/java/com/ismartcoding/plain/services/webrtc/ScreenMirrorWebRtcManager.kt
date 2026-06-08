@@ -9,6 +9,7 @@ import com.ismartcoding.lib.isUPlus
 import com.ismartcoding.lib.logcat.LogCat
 import com.ismartcoding.plain.data.DScreenMirrorQuality
 import com.ismartcoding.plain.enums.ScreenMirrorMode
+import com.ismartcoding.plain.preferences.StunServersPreference
 import com.ismartcoding.plain.web.websocket.WebRtcSignalingMessage
 import org.webrtc.AudioSource
 import org.webrtc.AudioTrack
@@ -24,6 +25,7 @@ class ScreenMirrorWebRtcManager(
     private val context: Context,
     private val getQuality: () -> DScreenMirrorQuality,
     private val getIsPortrait: () -> Boolean,
+    private val getStunServers: () -> String,
 ) {
     private var peerConnectionFactory: PeerConnectionFactory? = null
     private var videoSource: VideoSource? = null
@@ -122,6 +124,7 @@ class ScreenMirrorWebRtcManager(
                     { computeTargetBitrateKbps(getEffectiveResolution(getQuality(), adaptiveMonitor.adaptiveResolution)) },
                     { computeStartBitrateKbps(getEffectiveResolution(getQuality(), adaptiveMonitor.adaptiveResolution)) },
                     { adaptiveMonitor.targetFps }, { getQuality().mode },
+                    getStunServers,
                 )
                 peerSessions[clientId] = session
                 session.createPeerConnectionAndOffer()

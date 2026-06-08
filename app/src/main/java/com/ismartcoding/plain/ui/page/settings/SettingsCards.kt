@@ -3,12 +3,16 @@ import com.ismartcoding.plain.preferences.*
 
 import com.ismartcoding.plain.i18n.*
 import androidx.compose.foundation.clickable
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
 import com.ismartcoding.lib.helpers.CoroutinesHelper.withIO
 import com.ismartcoding.plain.enums.DarkTheme
 import com.ismartcoding.plain.preferences.DarkThemePreference
@@ -20,7 +24,9 @@ import com.ismartcoding.plain.ui.base.VerticalSpace
 import com.ismartcoding.plain.ui.nav.Routing
 import androidx.navigation.NavHostController
 import com.ismartcoding.plain.TempData
+import com.ismartcoding.plain.ui.helpers.DialogHelper
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
 
 @Composable
 internal fun SettingsCardItems(navController: NavHostController) {
@@ -77,25 +83,62 @@ internal fun SettingsCardItems(navController: NavHostController) {
 
 @Composable
 internal fun DeveloperSettingsCard(navController: NavHostController) {
+    val scope = rememberCoroutineScope()
+    var stunServers by remember { mutableStateOf("") }
+
+    LaunchedEffect(Unit) {
+        scope.launch(Dispatchers.IO) {
+            stunServers = StunServersPreference.getAsync()
+        }
+    }
+
     PCard {
         PListItem(title = stringResource(Res.string.client_id), value = TempData.clientId)
         PListItem(
-            modifier = Modifier.clickable { navController.navigate(Routing.WebDev) },
+            modifier = Modifier.clickable {
+                navController.navigate(Routing.WebDev)
+            },
             title = stringResource(Res.string.developer_options),
             icon = Res.drawable.code,
             showMore = true,
         )
         PListItem(
-            modifier = Modifier.clickable { navController.navigate(Routing.ComponentShowcase) },
+            modifier = Modifier.clickable {
+                navController.navigate(Routing.ComponentShowcase)
+            },
             title = stringResource(Res.string.ui_components),
             icon = Res.drawable.layout_grid,
             showMore = true,
         )
         PListItem(
-            modifier = Modifier.clickable { throw RuntimeException("Test crash triggered from Developer Options") },
+            modifier = Modifier.clickable {
+                throw RuntimeException("Test crash triggered from Developer Options")
+            },
             title = stringResource(Res.string.simulate_crash),
             subtitle = stringResource(Res.string.simulate_crash_desc),
             icon = Res.drawable.circle_alert,
+        )
+        PListItem(
+            modifier = Modifier.clickable {
+                scope.launch {
+                    DialogHelper.showInputDialog(
+                        title = "STUN Servers",
+                        initialValue = stunServers,
+                        description = "Enter STUN/TURN servers (comma separated). Example: stun:stun.l.google.com:19302",
+                    ) { newValue ->
+                        if (newValue.isNotBlank()) {
+                            scope.launch(Dispatchers.IO) {
+                                StunServersPreference.putAsync(newValue)
+                                stunServers = newValue
+                            }
+                        }
+                    }
+                }
+            },
+            title = "STUN Servers",
+            subtitle = stunServers.ifEmpty { "stun:stun.l.google.com:19302" },
+            icon = Res.drawable.wifi,
+            showMore = true,
         )
     }
 }

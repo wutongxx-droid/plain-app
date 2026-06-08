@@ -195,6 +195,11 @@ object ScreenMirrorQualityPreference : BasePreference<String>() {
     }
 }
 
+object StunServersPreference : BasePreference<String>() {
+    override val default = "stun:stun.l.google.com:19302"
+    override val key = stringPreferencesKey("stun_servers")
+}
+
 object ClientIdPreference : BasePreference<String>() {
     override val default = ""
     override val key = stringPreferencesKey("client_id")

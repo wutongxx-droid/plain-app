@@ -18,6 +18,7 @@ import com.ismartcoding.plain.events.ChannelUpdatedEvent
 import com.ismartcoding.plain.events.ConfirmDialogEvent
 import com.ismartcoding.plain.events.EventType
 import com.ismartcoding.plain.events.FetchLinkPreviewsEvent
+import com.ismartcoding.plain.events.InputDialogEvent
 import com.ismartcoding.plain.events.LoadingDialogEvent
 import com.ismartcoding.plain.events.WebSocketEvent
 import com.ismartcoding.plain.chat.ChatDbHelper
@@ -49,6 +50,7 @@ fun MainEventCollector(
     peerVM: PeerViewModel,
     onConfirmDialog: (ConfirmDialogEvent) -> Unit,
     onLoadingDialog: (LoadingDialogEvent) -> Unit,
+    onInputDialog: (InputDialogEvent) -> Unit,
     onToast: (ToastEvent) -> Unit,
     clearToast: () -> Unit,
 ) {
@@ -60,6 +62,7 @@ fun MainEventCollector(
             when (event) {
                 is ConfirmDialogEvent -> onConfirmDialog(event)
                 is LoadingDialogEvent -> onLoadingDialog(event)
+                is InputDialogEvent -> onInputDialog(event)
                 is ToastEvent -> {
                     onToast(event)
                     dismissToastJob?.cancel()

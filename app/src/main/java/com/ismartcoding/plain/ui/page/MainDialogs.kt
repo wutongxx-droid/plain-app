@@ -17,15 +17,27 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.ismartcoding.plain.events.ConfirmDialogEvent
+import com.ismartcoding.plain.events.InputDialogEvent
 import com.ismartcoding.plain.events.LoadingDialogEvent
 import com.ismartcoding.plain.ui.base.PToast
 import com.ismartcoding.plain.ui.base.ToastEvent
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 
 @Composable
 fun MainDialogs(
     loadingEvent: LoadingDialogEvent?,
     confirmEvent: ConfirmDialogEvent?,
+    inputDialogEvent: InputDialogEvent?,
     onDismissConfirm: () -> Unit,
+    onDismissInput: () -> Unit,
     toastState: ToastEvent?,
     onDismissToast: () -> Unit,
 ) {
@@ -43,6 +55,40 @@ fun MainDialogs(
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
         }
+    }
+    inputDialogEvent?.let { event ->
+        var text by remember { mutableStateOf(event.initialValue) }
+        AlertDialog(
+            onDismissRequest = onDismissInput,
+            title = { Text(event.title) },
+            text = {
+                Column {
+                    if (event.description.isNotEmpty()) {
+                        Text(event.description)
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                    OutlinedTextField(
+                        value = text,
+                        onValueChange = { text = it },
+                        modifier = Modifier,
+                        singleLine = false,
+                    )
+                }
+            },
+            confirmButton = {
+                Button(onClick = {
+                    event.onResult(text)
+                    onDismissInput()
+                }) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = onDismissInput) {
+                    Text("Cancel")
+                }
+            },
+        )
     }
     confirmEvent?.let {
         AlertDialog(

@@ -42,6 +42,7 @@ class ScreenMirrorService : LifecycleService() {
             context = this,
             getQuality = { qualityData },
             getIsPortrait = { isPortrait },
+            getStunServers = { stunServersData },
         )
         NotificationHelper.ensureDefaultChannel()
         isPortrait = isPortrait()
@@ -164,5 +165,6 @@ class ScreenMirrorService : LifecycleService() {
         @Volatile
         var instance: ScreenMirrorService? = null
         var qualityData = DScreenMirrorQuality()
+        var stunServersData = "stun:stun.l.google.com:19302"
     }
 }

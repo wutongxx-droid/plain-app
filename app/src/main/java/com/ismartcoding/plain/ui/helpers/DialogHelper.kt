@@ -145,4 +145,13 @@ object DialogHelper {
             }
         }
     }
+
+    fun showInputDialog(
+        title: String,
+        initialValue: String = "",
+        description: String = "",
+        onResult: (String) -> Unit,
+    ) {
+        sendEvent(InputDialogEvent(title, initialValue, description, onResult))
+    }
 }

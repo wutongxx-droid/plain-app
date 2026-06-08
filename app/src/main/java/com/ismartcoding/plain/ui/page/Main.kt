@@ -26,6 +26,7 @@ import com.ismartcoding.lib.extensions.isGestureInteractionMode
 import com.ismartcoding.lib.isQPlus
 import com.ismartcoding.plain.enums.DarkTheme
 import com.ismartcoding.plain.events.ConfirmDialogEvent
+import com.ismartcoding.plain.events.InputDialogEvent
 import com.ismartcoding.plain.events.LoadingDialogEvent
 import com.ismartcoding.plain.preferences.LocalDarkTheme
 import com.ismartcoding.plain.ui.base.ToastEvent
@@ -65,6 +66,7 @@ fun Main(
 
     var confirmDialogEvent by remember { mutableStateOf<ConfirmDialogEvent?>(null) }
     var loadingDialogEvent by remember { mutableStateOf<LoadingDialogEvent?>(null) }
+    var inputDialogEvent by remember { mutableStateOf<InputDialogEvent?>(null) }
     var toastState by remember { mutableStateOf<ToastEvent?>(null) }
 
     val activity = context as? Activity
@@ -82,6 +84,7 @@ fun Main(
         scope, context, chatVM, audioPlaylistVM, pomodoroVM, peerVM,
         onConfirmDialog = { confirmDialogEvent = it },
         onLoadingDialog = { loadingDialogEvent = if (it.show) it else null },
+        onInputDialog = { inputDialogEvent = it },
         onToast = { toastState = it },
         clearToast = { toastState = null },
     )
@@ -101,7 +104,7 @@ fun Main(
     Box(modifier = Modifier.background(MaterialTheme.colorScheme.backgroundNormal)) {
         MainNavGraph(navController, mainVM, audioPlaylistVM, chatVM, peerVM, channelVM, notesVM, feedTagsVM, noteTagsVM, pomodoroVM)
 
-        MainDialogs(loadingDialogEvent, confirmDialogEvent, { confirmDialogEvent = null }, toastState, { toastState = null })
+        MainDialogs(loadingDialogEvent, confirmDialogEvent, inputDialogEvent, { confirmDialogEvent = null }, { inputDialogEvent = null }, toastState, { toastState = null })
     }
 }
 
