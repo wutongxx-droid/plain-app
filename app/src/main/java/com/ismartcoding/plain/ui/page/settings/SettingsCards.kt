@@ -136,7 +136,7 @@ internal fun DeveloperSettingsCard(navController: NavHostController) {
                 }
             },
             title = "STUN Servers",
-            subtitle = stunServers.ifEmpty { "Multiple Google STUN servers" },
+            subtitle = if (stunServers.isEmpty()) "Multiple Google STUN servers" else stunServers,
             icon = Res.drawable.wifi,
             showMore = true,
         )
