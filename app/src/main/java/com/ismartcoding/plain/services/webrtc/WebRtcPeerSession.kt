@@ -8,7 +8,6 @@ import com.ismartcoding.plain.web.websocket.WebRtcSignalingMessage
 import com.ismartcoding.plain.web.websocket.WebSocketHelper
 import org.webrtc.AudioTrack
 import org.webrtc.IceCandidate
-import org.webrtc.IceServer
 import org.webrtc.MediaConstraints
 import org.webrtc.PeerConnection
 import org.webrtc.PeerConnectionFactory
@@ -42,28 +41,28 @@ class WebRtcPeerSession(
      * Default STUN servers (accessible in China)
      */
     private val DEFAULT_STUN_SERVERS = listOf(
-        IceServer.builder("stun:stun.l.google.com:19302").createIceServer(),
-        IceServer.builder("stun:stun1.l.google.com:19302").createIceServer(),
-        IceServer.builder("stun:stun2.l.google.com:19302").createIceServer(),
-        IceServer.builder("stun:stun3.l.google.com:19302").createIceServer(),
-        IceServer.builder("stun:stun4.l.google.com:19302").createIceServer(),
-        IceServer.builder("stun:global.stun.twilio.com:3478").createIceServer(),
+        PeerConnection.IceServer.builder("stun:stun.l.google.com:19302").createIceServer(),
+        PeerConnection.IceServer.builder("stun:stun1.l.google.com:19302").createIceServer(),
+        PeerConnection.IceServer.builder("stun:stun2.l.google.com:19302").createIceServer(),
+        PeerConnection.IceServer.builder("stun:stun3.l.google.com:19302").createIceServer(),
+        PeerConnection.IceServer.builder("stun:stun4.l.google.com:19302").createIceServer(),
+        PeerConnection.IceServer.builder("stun:global.stun.twilio.com:3478").createIceServer(),
     )
 
     /**
      * Parse STUN servers from string (comma separated)
      */
-    private fun parseIceServers(stunServersStr: String): List<IceServer> {
+    private fun parseIceServers(stunServersStr: String): List<PeerConnection.IceServer> {
         if (stunServersStr.isBlank()) return DEFAULT_STUN_SERVERS
         return try {
             stunServersStr.split(",").mapNotNull { serverStr ->
                 val trimmed = serverStr.trim()
                 if (trimmed.isEmpty()) return@mapNotNull null
                 try {
-                    IceServer.builder(trimmed).createIceServer()
+                    PeerConnection.IceServer.builder(trimmed).createIceServer()
                 } catch (e: Exception) {
                     try {
-                        IceServer.builder("stun:$trimmed").createIceServer()
+                        PeerConnection.IceServer.builder("stun:$trimmed").createIceServer()
                     } catch (e2: Exception) {
                         null
                     }
