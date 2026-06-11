@@ -41,6 +41,10 @@ jobs:
             git clone --depth 1 --branch main "$FRONTEND_REPO" ../plain-web-temp
           
           cd ../plain-web-temp
+          
+          # Fix package.json to remove packageManager requirement
+          sed -i '/"packageManager"/d' package.json
+          
           npm install
           npm run build
           
