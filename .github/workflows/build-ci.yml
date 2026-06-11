@@ -21,6 +21,36 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+        if: github.event_name == 'workflow_dispatch' || contains(github.ref, 'feature/')
+
+      # Clone and build frontend for feature branches
+      - name: Clone and build frontend
+        if: github.event_name == 'workflow_dispatch' || contains(github.ref, 'feature/')
+        run: |
+          # Clone frontend from user's fork (use workflow_dispatch branch or feature branch name)
+          FRONTEND_REPO="https://github.com/wutongxx-droid/plain-web.git"
+          FRONTEND_BRANCH="${{ github.ref_name }}"
+          
+          echo "Cloning frontend from $FRONTEND_REPO branch $FRONTEND_BRANCH"
+          git clone --depth 1 --branch "$FRONTEND_BRANCH" "$FRONTEND_REPO" ../plain-web-temp || \
+            git clone --depth 1 --branch main "$FRONTEND_REPO" ../plain-web-temp
+          
+          cd ../plain-web-temp
+          npm install
+          npm run build
+          
+          # Copy frontend build to Android project
+          mkdir -p ${{ github.workspace }}/app/src/main/resources/web
+          cp -r dist/* ${{ github.workspace }}/app/src/main/resources/web/
+          
+          echo "Frontend built and copied to resources/web"
+        shell: bash
+
       - uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
