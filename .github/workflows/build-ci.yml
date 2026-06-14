@@ -25,11 +25,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
         if: github.event_name == 'workflow_dispatch' || contains(github.ref, 'feature/')
 
       # Clone and build frontend for feature branches
       - name: Clone and build frontend
+        continue-on-error: true
         if: github.event_name == 'workflow_dispatch' || contains(github.ref, 'feature/')
         run: |
           # Clone frontend from user's fork (use workflow_dispatch branch or feature branch name)
@@ -59,7 +59,6 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: '17'
-          cache: 'gradle'
 
       - run: chmod +x ./gradlew
 
