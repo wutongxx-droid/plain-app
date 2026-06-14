@@ -30,6 +30,7 @@ android {
             when (abiFilterList.takeIf { it.size == 1 }?.first()) {
                 "armeabi-v7a" -> 2
                 "arm64-v8a" -> 1
+                "x86_64" -> 0  // Support x86_64 for emulator
                 else -> 0
             }
 
