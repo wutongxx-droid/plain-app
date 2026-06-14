@@ -55,12 +55,14 @@ jobs:
 
       - run: chmod +x ./gradlew
 
-      # Build debug APK (no signing required)
+      # Build debug APK (support multiple architectures)
       - name: Build debug APK
-        run: ./gradlew assembleGithubDebug
-
-      - name: List output files
-        run: find app/build/outputs -name "*.apk" 2>/dev/null || echo "No APK found"
+        run: |
+          # Build arm64-v8a (64-bit)
+          ./gradlew assembleGithubDebug
+          
+          # List output files
+          find app/build/outputs -name "*.apk" 2>/dev/null || echo "No APK found"
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
