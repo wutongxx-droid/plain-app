@@ -15,7 +15,15 @@ import org.webrtc.RtpParameters
 import org.webrtc.RtpSender
 import org.webrtc.SessionDescription
 import org.webrtc.VideoTrack
+import java.util.Collections
 import java.util.concurrent.atomic.AtomicBoolean
+
+// Google's public STUN servers for NAT traversal
+private val STUN_SERVERS = listOf(
+    PeerConnection.IceServer.builder("stun:stun.l.google.com:19302").createIceServer(),
+    PeerConnection.IceServer.builder("stun:stun1.l.google.com:19302").createIceServer(),
+    PeerConnection.IceServer.builder("stun:stun2.l.google.com:19302").createIceServer(),
+)
 
 /**
  * Manages a single WebRTC peer connection for one client.
@@ -38,7 +46,7 @@ class WebRtcPeerSession(
 
     fun createPeerConnectionAndOffer() {
         releasePeerConnection()
-        val rtcConfig = PeerConnection.RTCConfiguration(emptyList()).apply {
+        val rtcConfig = PeerConnection.RTCConfiguration(STUN_SERVERS).apply {
             sdpSemantics = PeerConnection.SdpSemantics.UNIFIED_PLAN
             tcpCandidatePolicy = PeerConnection.TcpCandidatePolicy.ENABLED
         }
