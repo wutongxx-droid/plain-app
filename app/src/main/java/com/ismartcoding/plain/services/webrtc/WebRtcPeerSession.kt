@@ -46,9 +46,16 @@ class WebRtcPeerSession(
 
     fun createPeerConnectionAndOffer() {
         releasePeerConnection()
+        
+        // ICE 配置:
+        // - STUN: 公共服务器用于 NAT 穿透
+        // - CandidatePolicy: 允许 UDP 和 TCP，TCP 可穿透防火墙
         val rtcConfig = PeerConnection.RTCConfiguration(STUN_SERVERS).apply {
             sdpSemantics = PeerConnection.SdpSemantics.UNIFIED_PLAN
+            // 优先 UDP，失败后自动切换 TCP
             tcpCandidatePolicy = PeerConnection.TcpCandidatePolicy.ENABLED
+            // 持续的 ICE gathering，更快发现候选地址
+            continualGatheringPolicy = PeerConnection.ContinualGatheringPolicy.GATHER_CONTINUALLY
         }
         peerConnection = peerConnectionFactory.createPeerConnection(rtcConfig, createObserver())
         videoSender = peerConnection?.addTrack(videoTrack, listOf("screen_stream"))
