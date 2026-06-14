@@ -25,6 +25,10 @@ jobs:
       - name: Clone and build frontend
         if: github.event_name == 'workflow_dispatch' || contains(github.ref, 'feature/')
         run: |
+          echo "=== Starting frontend build ==="
+          pwd
+          ls -la
+          
           # Clone frontend from user's fork
           FRONTEND_REPO="https://github.com/wutongxx-droid/plain-web.git"
           FRONTEND_BRANCH="${{ github.ref_name }}"
@@ -33,17 +37,29 @@ jobs:
           git clone --depth 1 --branch "$FRONTEND_BRANCH" "$FRONTEND_REPO" ../plain-web-temp || \
             git clone --depth 1 --branch main "$FRONTEND_REPO" ../plain-web-temp
           
+          ls -la ../plain-web-temp
+          
           cd ../plain-web-temp
+          pwd
           
           # Fix package.json to remove packageManager requirement
           sed -i '/"packageManager"/d' package.json
           
+          echo "=== Running npm install ==="
           npm install
+          
+          echo "=== Running npm run build ==="
           npm run build
+          
+          echo "=== Build output ==="
+          ls -la dist/
           
           # Copy frontend build to Android project
           mkdir -p ${{ github.workspace }}/app/src/main/resources/web
           cp -r dist/* ${{ github.workspace }}/app/src/main/resources/web/
+          
+          echo "=== Verifying web resources ==="
+          ls -la ${{ github.workspace }}/app/src/main/resources/web/
           
           echo "Frontend built and copied to resources/web"
         shell: bash
@@ -56,6 +72,7 @@ jobs:
       - run: chmod +x ./gradlew
 
       # Build debug APK (support multiple architectures: arm64 + x86_64)
+      # This builds the Android app with embedded frontend for feature branches
       - name: Build debug APK
         run: |
           # Build arm64-v8a (64-bit ARM for real devices)
