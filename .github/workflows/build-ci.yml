@@ -55,13 +55,16 @@ jobs:
 
       - run: chmod +x ./gradlew
 
-      # Build debug APK (support multiple architectures)
+      # Build debug APK (support multiple architectures: arm64 + x86_64)
       - name: Build debug APK
         run: |
-          # Build arm64-v8a (64-bit)
+          # Build arm64-v8a (64-bit ARM for real devices)
           ./gradlew assembleGithubDebug
           
-          # List output files
+          # Build x86_64 (for emulator)
+          ./gradlew assembleGithubDebug -PabiFilters=x86_64
+          
+          # List all output files
           find app/build/outputs -name "*.apk" 2>/dev/null || echo "No APK found"
 
       - name: Upload debug APK
